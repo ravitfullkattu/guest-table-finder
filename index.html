@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guest Table Finder</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -29,94 +28,26 @@
       position: relative;
     }
 
-    h2 {
-      color: #333;
-      margin-bottom: 15px;
-    }
+    h2 { color: #333; margin-bottom: 15px; }
+    .logo { max-width: 150px; margin-bottom: 15px; border-radius: 10px; }
+    input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+    button { background: #4CAF50; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: 0.3s; width: 100%; }
+    button:hover { background: #45a049; }
+    .result p { background: #f0f0f0; padding: 10px; border-radius: 8px; margin: 8px 0; text-align: left; }
+    .result p.table-header { font-weight: bold; background: #dce6f1; font-size: 18px; }
+    .highlight { color: green; font-weight: bold; }
+    .footer { margin-top: 20px; font-size: 12px; color: #888; }
 
-    .logo {
-      max-width: 150px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 15px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 12px 25px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      width: 100%;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    .result p {
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 8px 0;
-      animation: fadeIn 0.4s ease;
-      text-align: left;
-    }
-
-    .result p.table-header {
-      font-weight: bold;
-      background: #dce6f1;
-      font-size: 18px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #888;
-    }
-
-    /* Loader overlay */
     #loaderOverlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(255, 255, 255, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 15px;
-      visibility: hidden;
-      z-index: 1000;
+      display: flex; justify-content: center; align-items: center;
+      border-radius: 15px; visibility: hidden; z-index: 1000;
     }
 
-    /* Spinning hourglass SVG */
-    #loaderOverlay svg {
-      width: 50px;
-      height: 50px;
-      animation: spin 1.2s linear infinite;
-      fill: #4CAF50;
-    }
+    #loaderOverlay svg { width: 50px; height: 50px; animation: spin 1.2s linear infinite; fill: #4CAF50; }
 
-    @keyframes spin {
-      from { transform: rotate(0deg);}
-      to { transform: rotate(360deg);}
-    }
+    @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
   </style>
 </head>
 
@@ -130,21 +61,17 @@
     <button id="searchBtn">Search</button>
 
     <div id="results" class="result"></div>
-
     <div class="footer">Event Table Finder</div>
 
-    <!-- Loader Overlay -->
     <div id="loaderOverlay" aria-live="polite" aria-busy="true" role="alert" aria-label="Loading">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 2v6h1v8H6v6h12v-6h-1V8h1V2H6zm10 2v4H8V4h8zM8 18h8v4H8v-4z"/>
       </svg>
     </div>
   </div>
 
   <script>
-    // Replace this with your published web app URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbzJ3cxuC2t9m6K7EWXIAVDjWguexbXREba3DTuffVRlNP6FlDaMOtAkZxg3TKfkTNU7lA/exec";
-
+    const API_URL = "https://script.google.com/macros/s/AKfycbzcwU47Y3KD_EneSC2YIAeADUwy5zocP5USujdJEOo3rGsq4Sd9ZAQVahR6acOlm9SHPw/exec";
     const loader = document.getElementById('loaderOverlay');
     const resultsDiv = document.getElementById('results');
     const queryInput = document.getElementById('query');
@@ -153,42 +80,29 @@
     function showLoader() { loader.style.visibility = 'visible'; }
     function hideLoader() { loader.style.visibility = 'hidden'; }
 
+    function highlight(text, query) {
+      const regex = new RegExp(`(${query})`, "gi");
+      return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
     async function search() {
       const query = queryInput.value.toLowerCase().trim();
       resultsDiv.innerHTML = '';
-
-      if (!query) {
-        resultsDiv.innerHTML = '<p>Please enter a name.</p>';
-        return;
-      }
+      if (!query) { resultsDiv.innerHTML = '<p>Please enter a name.</p>'; return; }
 
       showLoader();
 
       try {
-        const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, { method: "GET" });
+        const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const text = await response.text();   // <-- Important for HtmlService JSON
+        const data = JSON.parse(text);        // Parse the string returned by HtmlService
         hideLoader();
 
-        if (!data || data.length === 0) {
-          resultsDiv.innerHTML = '<p>No matches found.</p>';
-          return;
-        }
+        if (!data || data.length === 0) { resultsDiv.innerHTML = '<p>No matches found.</p>'; return; }
 
-        // Find all guests matching the query
-        const matchedGuests = data.filter(item =>
-          item.name.toLowerCase().includes(query)
-        );
+        const tables = [...new Set(data.map(item => item.table.toString()))];
 
-        if (matchedGuests.length === 0) {
-          resultsDiv.innerHTML = '<p>No matches found.</p>';
-          return;
-        }
-
-        // Get unique tables from matched guests
-        const tables = [...new Set(matchedGuests.map(item => item.table.toString()))];
-
-        // For each table, list all guests
         tables.forEach(tableNum => {
           const tableHeader = document.createElement('p');
           tableHeader.classList.add('table-header');
@@ -198,7 +112,7 @@
           const tableGuests = data.filter(item => item.table.toString() === tableNum);
           tableGuests.forEach(guest => {
             const p = document.createElement('p');
-            p.textContent = `- ${guest.name}`;
+            p.innerHTML = `- ${highlight(guest.name, query)}`;
             resultsDiv.appendChild(p);
           });
         });
