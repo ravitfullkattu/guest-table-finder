@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guest Table Finder</title>
 
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -34,7 +33,6 @@
       margin-bottom: 15px;
     }
 
-    /* Image/logo */
     .logo {
       max-width: 150px;
       margin-bottom: 15px;
@@ -95,17 +93,15 @@
 
 <body>
   <div class="container">
-    <!-- Static picture / logo -->
     <img src="https://www.theknot.com/tk-media/images/495995ec-7459-410d-a1e7-98a2bea3919d~rt_auto-cr_27.0.837.1080-rs_2880.h?ordering=explicit&quality=75" alt="Event Logo" class="logo">
-
     <h2>Find Your Table</h2>
     <p>Enter part of your name to see your table number and all guests at the same table.</p>
-    
+
     <input id="query" placeholder="e.g., Smith or Theo" />
-    <button onclick="search()">Search</button>
-    
+    <button id="searchBtn">Search</button>
+
     <div id="results" class="result"></div>
-    
+
     <div class="footer">
       Event Table Finder
     </div>
@@ -114,20 +110,16 @@
   <script>
     async function search() {
       const input = document.getElementById('query');
-      const query = input.value.toLowerCase();
+      const query = input.value.toLowerCase().trim();
       const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
+      resultsDiv.innerHTML = ''; // clear previous results
 
       if (!query) {
         resultsDiv.innerHTML = '<p>Please enter a name.</p>';
         return;
       }
 
-      // Clear the input field after search
-      input.value = '';
-
       try {
-        // Replace with your Google Apps Script Web App URL
         const response = await fetch('https://script.google.com/macros/s/AKfycbxajXZE9R0fpv5aNbs1RGBvTNw1bYa2Mp27WdD_Tu73leju-ykzsD_2Mplh4l8si57HWA/exec?q=');
         const data = await response.json();
 
@@ -141,16 +133,17 @@
           return;
         }
 
-        // Collect all table numbers from matched guests
-        const tables = [...new Set(matchedGuests.map(item => item.table))];
+        // Collect all unique table numbers
+        const tables = [...new Set(matchedGuests.map(item => item.table.toString()))];
 
-        // For each table, list all guests assigned to it
+        // List all guests in each table
         tables.forEach(tableNum => {
           const tableHeader = document.createElement('p');
           tableHeader.textContent = `Table ${tableNum}:`;
+          tableHeader.style.fontWeight = 'bold';
           resultsDiv.appendChild(tableHeader);
 
-          const tableGuests = data.filter(item => item.table === tableNum);
+          const tableGuests = data.filter(item => item.table.toString() === tableNum);
           tableGuests.forEach(guest => {
             const p = document.createElement('p');
             p.textContent = `- ${guest.name}`;
@@ -163,6 +156,16 @@
         console.error(err);
       }
     }
+
+    // Click button
+    document.getElementById('searchBtn').addEventListener('click', search);
+
+    // Enter key triggers search
+    document.getElementById('query').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        search();
+      }
+    });
   </script>
 </body>
 </html>
