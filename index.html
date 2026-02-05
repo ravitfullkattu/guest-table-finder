@@ -71,7 +71,9 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzcwU47Y3KD_EneSC2YIAeADUwy5zocP5USujdJEOo3rGsq4Sd9ZAQVahR6acOlm9SHPw/exec";
+    // <<< CHANGE THIS TO YOUR APPS SCRIPT WEB APP URL >>>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzHJQ7tVXmr3NtV9HJWAZFVbpFxR8K24xgbcLkXvvOw9rXTwix9XNxU2MIvYbpcztnndw/exec";
+
     const loader = document.getElementById('loaderOverlay');
     const resultsDiv = document.getElementById('results');
     const queryInput = document.getElementById('query');
@@ -95,12 +97,13 @@
       try {
         const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const text = await response.text();   // <-- Important for HtmlService JSON
-        const data = JSON.parse(text);        // Parse the string returned by HtmlService
+        const text = await response.text();  // HtmlService returns text
+        const data = JSON.parse(text);       // Convert to JSON
         hideLoader();
 
         if (!data || data.length === 0) { resultsDiv.innerHTML = '<p>No matches found.</p>'; return; }
 
+        // Find unique tables
         const tables = [...new Set(data.map(item => item.table.toString()))];
 
         tables.forEach(tableNum => {
