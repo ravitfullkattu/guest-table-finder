@@ -1,171 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guest Table Finder</title>
+  <title>Find My Table</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
 
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
-      background: #f7f7f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 15px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 90%;
+      font-family: Arial, sans-serif;
       text-align: center;
     }
 
-    h2 {
-      color: #333;
-      margin-bottom: 15px;
+    img.logo {
+      max-width: 200px;
+      margin-bottom: 20px;
     }
 
-    .logo {
-      max-width: 150px;
-      margin-bottom: 15px;
-      border-radius: 10px;
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
     }
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 15px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      box-sizing: border-box;
+    .spinner {
+      font-size: 50px;
+      animation: spin 1s linear infinite;
     }
 
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 12px 25px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      width: 100%;
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
-    button:hover {
-      background: #45a049;
+    .graffiti {
+      font-family: 'Permanent Marker', cursive;
+      color: #ff4d4d;
+      font-size: 28px;
+      margin-top: 15px;
+      animation: shake 0.4s infinite;
     }
 
-    .result p {
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 8px 0;
-      animation: fadeIn 0.4s ease;
+    @keyframes shake {
+      0% { transform: rotate(-2deg); }
+      50% { transform: rotate(2deg); }
+      100% { transform: rotate(-2deg); }
     }
 
-    .result p:first-child {
-      font-weight: bold;
-      background: #dce6f1;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #888;
+    ul {
+      list-style: none;
+      padding: 0;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <img src="https://www.theknot.com/tk-media/images/495995ec-7459-410d-a1e7-98a2bea3919d~rt_auto-cr_27.0.837.1080-rs_2880.h?ordering=explicit&quality=75" alt="Event Logo" class="logo">
-    <h2>Find Your Table</h2>
-    <p>Enter part of your name to see your table number and all guests at the same table.</p>
 
-    <input id="query" placeholder="e.g., Smith or Theo" />
-    <button id="searchBtn">Search</button>
+<img class="logo" src="https://www.theknot.com/tk-media/images/495995ec-7459-410d-a1e7-98a2bea3919d~rt_auto-cr_27.0.837.1080-rs_2880.h?ordering=explicit&quality=75">
 
-    <div id="results" class="result"></div>
+<h1>Find Your Table</h1>
+<input id="guestName" placeholder="Enter your name">
+<br><br>
+<button onclick="findTable()">Find My Table</button>
 
-    <div class="footer">
-      Event Table Finder
-    </div>
-  </div>
+<div id="overlay">
+  <div class="spinner">⏳</div>
+  <div class="graffiti">Finding your table...</div>
+</div>
 
-  <script>
-    async function search() {
-      const input = document.getElementById('query');
-      const query = input.value.toLowerCase().trim();
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = ''; // clear previous results
+<div id="result"></div>
 
-      if (!query) {
-        resultsDiv.innerHTML = '<p>Please enter a name.</p>';
-        return;
-      }
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzJ3cxuC2t9m6K7EWXIAVDjWguexbXREba3DTuffVRlNP6FlDaMOtAkZxg3TKfkTNU7lA/exec";
 
-      try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbxajXZE9R0fpv5aNbs1RGBvTNw1bYa2Mp27WdD_Tu73leju-ykzsD_2Mplh4l8si57HWA/exec?q=');
-        const data = await response.json();
+  function showLoader() {
+    document.getElementById("overlay").style.display = "flex";
+  }
 
-        // Find all guests that match the query
-        const matchedGuests = data.filter(item =>
-          item.name.toLowerCase().includes(query)
-        );
+  function hideLoader() {
+    document.getElementById("overlay").style.display = "none";
+  }
 
-        if (matchedGuests.length === 0) {
-          resultsDiv.innerHTML = '<p>No matches found.</p>';
+  function findTable() {
+    const name = document.getElementById("guestName").value.trim();
+    if (!name) {
+      alert("Please enter your name");
+      return;
+    }
+
+    showLoader();
+
+    fetch(`${API_URL}?name=${encodeURIComponent(name)}`)
+      .then(res => res.json())
+      .then(data => {
+        hideLoader();
+
+        if (!data.found) {
+          document.getElementById("result").innerHTML =
+            "<p>Sorry, we couldn't find your table.</p>";
           return;
         }
 
-        // Collect all unique table numbers
-        const tables = [...new Set(matchedGuests.map(item => item.table.toString()))];
-
-        // List all guests in each table
-        tables.forEach(tableNum => {
-          const tableHeader = document.createElement('p');
-          tableHeader.textContent = `Table ${tableNum}:`;
-          tableHeader.style.fontWeight = 'bold';
-          resultsDiv.appendChild(tableHeader);
-
-          const tableGuests = data.filter(item => item.table.toString() === tableNum);
-          tableGuests.forEach(guest => {
-            const p = document.createElement('p');
-            p.textContent = `- ${guest.name}`;
-            resultsDiv.appendChild(p);
-          });
-        });
-
-      } catch (err) {
-        resultsDiv.innerHTML = '<p>Error loading data. Try again later.</p>';
+        document.getElementById("result").innerHTML = `
+          <h2>Table ${data.table}</h2>
+          <p>You are seated with:</p>
+          <ul>
+            ${data.guests.map(g => `<li>${g}</li>`).join("")}
+          </ul>
+          <img src="${data.imageUrl}" style="max-width:300px;">
+        `;
+      })
+      .catch(err => {
+        hideLoader();
+        alert("Error finding table.");
         console.error(err);
-      }
-    }
+      });
+  }
+</script>
 
-    // Click button
-    document.getElementById('searchBtn').addEventListener('click', search);
-
-    // Enter key triggers search
-    document.getElementById('query').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        search();
-      }
-    });
-  </script>
 </body>
 </html>
