@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find Your Table</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input { width: 100%; padding: 10px; font-size: 16px; margin-top: 10px; }
+    button { padding: 10px; margin-top: 10px; font-size: 16px; }
+    .result { margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+<h2>Find Your Table</h2>
+<input id="query" placeholder="Enter part of your name" />
+<button onclick="search()">Search</button>
+
+<div id="results"></div>
+
+<script>
+function search() {
+  const q = document.getElementById("query").value;
+  if (q.length < 2) return;
+  fetch("https://script.google.com/macros/s/AKfycbxajXZE9R0fpv5aNbs1RGBvTNw1bYa2Mp27WdD_Tu73leju-ykzsD_2Mplh4l8si57HWA/exec?q=" + encodeURIComponent(q))
+    .then(res => res.json())
+    .then(data => {
+      const div = document.getElementById("results");
+      div.innerHTML = "";
+
+      if (data.length === 0) {
+        div.innerHTML = "<p>No match found. Please see the host.</p>";
+        return;
+      }
+
+      data.forEach(item => {
+        const p = document.createElement("p");
+        p.textContent = `${item.name} — Table ${item.table}`;
+        div.appendChild(p);
+      });
+    });
+}
+</script>
+
+</body>
+</html>
