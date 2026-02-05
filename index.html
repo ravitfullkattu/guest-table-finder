@@ -7,27 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: #f7f7f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 15px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      position: relative;
-    }
-
+    body { font-family: 'Roboto', sans-serif; background: #f7f7f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .container { background: white; padding: 30px 25px; border-radius: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); max-width: 400px; width: 90%; text-align: center; position: relative; }
     h2 { color: #333; margin-bottom: 15px; }
     .logo { max-width: 150px; margin-bottom: 15px; border-radius: 10px; }
     input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
@@ -37,20 +18,11 @@
     .result p.table-header { font-weight: bold; background: #dce6f1; font-size: 18px; }
     .highlight { color: green; font-weight: bold; }
     .footer { margin-top: 20px; font-size: 12px; color: #888; }
-
-    #loaderOverlay {
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.8);
-      display: flex; justify-content: center; align-items: center;
-      border-radius: 15px; visibility: hidden; z-index: 1000;
-    }
-
+    #loaderOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; border-radius: 15px; visibility: hidden; z-index: 1000; }
     #loaderOverlay svg { width: 50px; height: 50px; animation: spin 1.2s linear infinite; fill: #4CAF50; }
-
     @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
   </style>
 </head>
-
 <body>
   <div class="container">
     <img src="https://www.theknot.com/tk-media/images/495995ec-7459-410d-a1e7-98a2bea3919d~rt_auto-cr_27.0.837.1080-rs_2880.h?ordering=explicit&quality=75" alt="Event Logo" class="logo">
@@ -71,9 +43,6 @@
   </div>
 
   <script>
-    // <<< CHANGE THIS TO YOUR APPS SCRIPT WEB APP URL >>>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzHJQ7tVXmr3NtV9HJWAZFVbpFxR8K24xgbcLkXvvOw9rXTwix9XNxU2MIvYbpcztnndw/exec";
-
     const loader = document.getElementById('loaderOverlay');
     const resultsDiv = document.getElementById('results');
     const queryInput = document.getElementById('query');
@@ -88,42 +57,39 @@
     }
 
     async function search() {
-      const query = queryInput.value.toLowerCase().trim();
+      const query = queryInput.value.trim();
       resultsDiv.innerHTML = '';
       if (!query) { resultsDiv.innerHTML = '<p>Please enter a name.</p>'; return; }
 
       showLoader();
 
       try {
-        const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const text = await response.text();  // HtmlService returns text
-        const data = JSON.parse(text);       // Convert to JSON
-        hideLoader();
+        // Call Apps Script backend function
+        google.script.run.withSuccessHandler((data) => {
+          hideLoader();
+          if (!data || data.length === 0) { resultsDiv.innerHTML = '<p>No matches found.</p>'; return; }
 
-        if (!data || data.length === 0) { resultsDiv.innerHTML = '<p>No matches found.</p>'; return; }
+          // Find unique tables
+          const tables = [...new Set(data.map(item => item.table.toString()))];
+          tables.forEach(tableNum => {
+            const tableHeader = document.createElement('p');
+            tableHeader.classList.add('table-header');
+            tableHeader.textContent = `Table ${tableNum}:`;
+            resultsDiv.appendChild(tableHeader);
 
-        // Find unique tables
-        const tables = [...new Set(data.map(item => item.table.toString()))];
-
-        tables.forEach(tableNum => {
-          const tableHeader = document.createElement('p');
-          tableHeader.classList.add('table-header');
-          tableHeader.textContent = `Table ${tableNum}:`;
-          resultsDiv.appendChild(tableHeader);
-
-          const tableGuests = data.filter(item => item.table.toString() === tableNum);
-          tableGuests.forEach(guest => {
-            const p = document.createElement('p');
-            p.innerHTML = `- ${highlight(guest.name, query)}`;
-            resultsDiv.appendChild(p);
+            const tableGuests = data.filter(item => item.table.toString() === tableNum);
+            tableGuests.forEach(guest => {
+              const p = document.createElement('p');
+              p.innerHTML = `- ${highlight(guest.name, query)}`;
+              resultsDiv.appendChild(p);
+            });
           });
-        });
+        }).getGuests(query);
 
       } catch (error) {
         hideLoader();
         console.error(error);
-        resultsDiv.innerHTML = '<p>Error loading data. Please check your Web App deployment and URL.</p>';
+        resultsDiv.innerHTML = '<p>Error loading data.</p>';
       }
     }
 
