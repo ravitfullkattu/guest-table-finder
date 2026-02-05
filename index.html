@@ -135,7 +135,6 @@
 
     <!-- Loader Overlay -->
     <div id="loaderOverlay" aria-live="polite" aria-busy="true" role="alert" aria-label="Loading">
-      <!-- Spinning hourglass icon SVG -->
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
         <path d="M6 2v6h1v8H6v6h12v-6h-1V8h1V2H6zm10 2v4H8V4h8zM8 18h8v4H8v-4z"/>
       </svg>
@@ -143,7 +142,6 @@
   </div>
 
   <script>
-    // Replace with your Web App URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzJ3cxuC2t9m6K7EWXIAVDjWguexbXREba3DTuffVRlNP6FlDaMOtAkZxg3TKfkTNU7lA/exec";
 
     const loader = document.getElementById('loaderOverlay');
@@ -151,13 +149,8 @@
     const queryInput = document.getElementById('query');
     const searchBtn = document.getElementById('searchBtn');
 
-    function showLoader() {
-      loader.style.visibility = 'visible';
-    }
-
-    function hideLoader() {
-      loader.style.visibility = 'hidden';
-    }
+    function showLoader() { loader.style.visibility = 'visible'; }
+    function hideLoader() { loader.style.visibility = 'hidden'; }
 
     async function search() {
       const query = queryInput.value.toLowerCase().trim();
@@ -176,22 +169,37 @@
         const data = await response.json();
         hideLoader();
 
-        if (!data.found) {
+        if (!data || data.length === 0) {
           resultsDiv.innerHTML = '<p>No matches found.</p>';
           return;
         }
 
-        // Show table header
-        const tableHeader = document.createElement('p');
-        tableHeader.classList.add('table-header');
-        tableHeader.textContent = `Table ${data.table}:`;
-        resultsDiv.appendChild(tableHeader);
+        // Find all guests matching the query
+        const matchedGuests = data.filter(item =>
+          item.name.toLowerCase().includes(query)
+        );
 
-        // List all guests
-        data.guests.forEach(guest => {
-          const p = document.createElement('p');
-          p.textContent = `- ${guest}`;
-          resultsDiv.appendChild(p);
+        if (matchedGuests.length === 0) {
+          resultsDiv.innerHTML = '<p>No matches found.</p>';
+          return;
+        }
+
+        // Get unique tables from matched guests
+        const tables = [...new Set(matchedGuests.map(item => item.table.toString()))];
+
+        // For each table, list all guests
+        tables.forEach(tableNum => {
+          const tableHeader = document.createElement('p');
+          tableHeader.classList.add('table-header');
+          tableHeader.textContent = `Table ${tableNum}:`;
+          resultsDiv.appendChild(tableHeader);
+
+          const tableGuests = data.filter(item => item.table.toString() === tableNum);
+          tableGuests.forEach(guest => {
+            const p = document.createElement('p');
+            p.textContent = `- ${guest.name}`;
+            resultsDiv.appendChild(p);
+          });
         });
 
       } catch (error) {
@@ -201,11 +209,8 @@
       }
     }
 
-    // Event listeners
     searchBtn.addEventListener('click', search);
-    queryInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') search();
-    });
+    queryInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') search(); });
   </script>
 </body>
 </html>
