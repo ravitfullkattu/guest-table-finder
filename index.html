@@ -142,6 +142,7 @@
   </div>
 
   <script>
+    // Replace this with your published web app URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzJ3cxuC2t9m6K7EWXIAVDjWguexbXREba3DTuffVRlNP6FlDaMOtAkZxg3TKfkTNU7lA/exec";
 
     const loader = document.getElementById('loaderOverlay');
@@ -164,7 +165,7 @@
       showLoader();
 
       try {
-        const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, { method: "GET" });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         hideLoader();
@@ -205,7 +206,7 @@
       } catch (error) {
         hideLoader();
         console.error(error);
-        resultsDiv.innerHTML = '<p>Error loading data. Please make sure you are accessing the page via HTTP(S) and not directly as a file.</p>';
+        resultsDiv.innerHTML = '<p>Error loading data. Please check your Web App deployment and URL.</p>';
       }
     }
 
